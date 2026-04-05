@@ -113,6 +113,52 @@ class _BookingCalendarState extends State<BookingCalendar>
     }
   }
 
+  Future<void> _onEventTap(
+    List<CalendarEventData> events,
+    DateTime dateTime,
+  ) async {
+    if (events.isEmpty) return;
+    final event = events.first;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete meeting'),
+        content: Text(
+          'Are you sure you want to delete this meeting?\n'
+          '${TimeOfDay.fromDateTime(event.startTime!).format(ctx)} → '
+          '${TimeOfDay.fromDateTime(event.endTime!).format(ctx)}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+              foregroundColor: Theme.of(ctx).colorScheme.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final booking = BookingModel(
+      startTime: event.startTime!,
+      endTime: event.endTime!,
+      title: event.title,
+    );
+    await _repository.delete(booking);
+
+    if (!mounted) return;
+    CalendarControllerProvider.of<Object?>(context).controller.remove(event);
+  }
+
   @override
   Widget build(BuildContext context) {
     return WeekView(
@@ -138,6 +184,7 @@ class _BookingCalendarState extends State<BookingCalendar>
         ),
       ),
       onDateTap: _onSlotTapped,
+      onEventTap: (events, dateTime) => _onEventTap(events, dateTime),
     );
   }
 }

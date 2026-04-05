@@ -221,6 +221,26 @@ Invite testers by email. They will receive install links automatically after eac
 
 ---
 
+## Troubleshooting
+
+### Android Emulator frozen (not responding to clicks)
+
+The emulator can freeze and stop handling input. Kill it and cold boot:
+
+```bash
+# Kill the frozen emulator
+adb -s emulator-5554 emu kill
+
+# Cold boot (skips saved snapshot that caused the freeze)
+~/Library/Android/sdk/emulator/emulator -avd Pixel_8_Pro_API_35 -no-snapshot-load &
+```
+
+Wait ~30 seconds for it to fully boot, then run `flutter run` again.
+
+> If you see multiple devices with `adb devices`, replace `emulator-5554` with the correct ID.
+
+---
+
 ## Project Structure
 
 ```

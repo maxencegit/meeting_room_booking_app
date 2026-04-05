@@ -43,6 +43,16 @@ class BookingRepository {
     return const SaveBookingSuccess();
   }
 
+  Future<void> delete(BookingModel booking) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? [];
+    raw.removeWhere((s) {
+      final b = BookingModel.fromJson(jsonDecode(s) as Map<String, dynamic>);
+      return b.startTime == booking.startTime && b.endTime == booking.endTime;
+    });
+    await prefs.setStringList(_key, raw);
+  }
+
   Future<void> deleteAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_key);
