@@ -13,12 +13,42 @@ class BookingCalendar extends StatefulWidget {
   State<BookingCalendar> createState() => _BookingCalendarState();
 }
 
-class _BookingCalendarState extends State<BookingCalendar> {
+class _BookingCalendarState extends State<BookingCalendar>
+    with WidgetsBindingObserver {
   final _repository = BookingRepository();
+  static const _startHour = 8;
+  static const _endHour = 19;
+  static const _heightPerMinute = 0.7;
+
+  Key _calendarKey = UniqueKey();
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadBookings();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      setState(() => _calendarKey = UniqueKey());
+    }
+  }
+
+  double _scrollOffset(BuildContext context) {
+    final now = DateTime.now();
+    final minutesFromStart = (now.hour - _startHour) * 60 + now.minute;
+    final currentTimePixel = minutesFromStart * _heightPerMinute;
+    final mq = MediaQuery.of(context);
+    final viewportHeight = mq.size.height - mq.padding.top - mq.padding.bottom;
+    return (currentTimePixel - viewportHeight / 2).clamp(0.0, double.maxFinite);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   Future<void> _loadBookings() async {
@@ -86,11 +116,14 @@ class _BookingCalendarState extends State<BookingCalendar> {
   @override
   Widget build(BuildContext context) {
     return WeekView(
+      key: _calendarKey,
       showLiveTimeLineInAllDays: true,
       timeLineWidth: 56,
       weekTitleHeight: 40,
-      startHour: 8,
-      endHour: 19,
+      startHour: _startHour,
+      endHour: _endHour,
+      heightPerMinute: _heightPerMinute,
+      scrollOffset: _scrollOffset(context),
       weekDays: const [
         WeekDays.monday,
         WeekDays.tuesday,
