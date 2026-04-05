@@ -1,8 +1,88 @@
 import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
 
-class BookingCalendar extends StatelessWidget {
+import '../data/booking_model.dart';
+import '../data/booking_repository.dart';
+
+import 'booking_dialog.dart';
+
+class BookingCalendar extends StatefulWidget {
   const BookingCalendar({super.key});
+
+  @override
+  State<BookingCalendar> createState() => _BookingCalendarState();
+}
+
+class _BookingCalendarState extends State<BookingCalendar> {
+  final _repository = BookingRepository();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBookings();
+  }
+
+  Future<void> _loadBookings() async {
+    final bookings = await _repository.loadAll();
+    if (!mounted) return;
+
+    final controller = CalendarControllerProvider.of<Object?>(context).controller;
+    for (final booking in bookings) {
+      controller.add(
+        CalendarEventData(
+          title: booking.title,
+          date: booking.startTime,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+      );
+    }
+  }
+
+  Future<void> _onSlotTapped(DateTime dateTime) async {
+    final dialogResult = await showDialog<(TimeOfDay, TimeOfDay)>(
+      context: context,
+      builder: (_) => BookingDialog(initialDateTime: dateTime),
+    );
+
+    if (dialogResult == null || !mounted) return;
+
+    final (startTime, endTime) = dialogResult;
+    final start = DateTime(
+      dateTime.year, dateTime.month, dateTime.day,
+      startTime.hour, startTime.minute,
+    );
+    final end = DateTime(
+      dateTime.year, dateTime.month, dateTime.day,
+      endTime.hour, endTime.minute,
+    );
+
+    final booking = BookingModel(startTime: start, endTime: end, title: 'Meeting');
+    final result = await _repository.save(booking);
+
+    if (!mounted) return;
+
+    switch (result) {
+      case SaveBookingConflict():
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('A meeting already exists during this time slot'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      case SaveBookingSuccess():
+        CalendarControllerProvider.of<Object?>(context).controller.add(
+          CalendarEventData(
+            title: booking.title,
+            date: booking.startTime,
+            startTime: booking.startTime,
+            endTime: booking.endTime,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +96,7 @@ class BookingCalendar extends StatelessWidget {
           color: Theme.of(context).colorScheme.surface,
         ),
       ),
+      onDateTap: _onSlotTapped,
     );
   }
 }
@@ -42,16 +123,12 @@ class _WeekDayHeader extends StatelessWidget {
         const SizedBox(height: 2),
         CircleAvatar(
           radius: 14,
-          backgroundColor:
-              isToday ? colorScheme.primary : Colors.transparent,
+          backgroundColor: isToday ? colorScheme.primary : Colors.transparent,
           child: Text(
             '${date.day}',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: isToday
-                      ? colorScheme.onPrimary
-                      : colorScheme.onSurface,
-                  fontWeight:
-                      isToday ? FontWeight.bold : FontWeight.normal,
+                  color: isToday ? colorScheme.onPrimary : colorScheme.onSurface,
+                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
                 ),
           ),
         ),
