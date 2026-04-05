@@ -176,7 +176,7 @@ class _BookingCalendarState extends State<BookingCalendar>
       key: _calendarKey,
       showLiveTimeLineInAllDays: true,
       timeLineWidth: 56,
-      weekTitleHeight: 40,
+      weekTitleHeight: 48,
       startHour: _startHour,
       endHour: _endHour,
       heightPerMinute: _heightPerMinute,
