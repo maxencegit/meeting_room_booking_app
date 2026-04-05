@@ -180,6 +180,7 @@ class _BookingCalendarState extends State<BookingCalendar>
       startHour: _startHour,
       endHour: _endHour,
       heightPerMinute: _heightPerMinute,
+      minuteSlotSize: MinuteSlotSize.minutes15,
       scrollOffset: _scrollOffset(context),
       weekDays: const [
         WeekDays.monday,
