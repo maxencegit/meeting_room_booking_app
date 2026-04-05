@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'booking_calendar.dart';
+
 const _roomNumberKey = 'room_number';
 
 class HomeScreen extends StatefulWidget {
@@ -15,6 +17,9 @@ class _HomeScreenState extends State<HomeScreen> {
   final _controller = TextEditingController();
   bool _isSaved = false;
 
+  // null = still loading, false = not set, true = already set
+  bool? _isRoomNumberSet;
+
   @override
   void initState() {
     super.initState();
@@ -24,9 +29,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadSavedValue() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getInt(_roomNumberKey);
-    if (saved != null && mounted) {
-      _controller.text = saved.toString();
-    }
+    if (!mounted) return;
+    setState(() {
+      _isRoomNumberSet = saved != null;
+      if (saved != null) _controller.text = saved.toString();
+    });
   }
 
   Future<void> _onSubmit() async {
@@ -39,9 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_roomNumberKey, value);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Room number saved')),
-      );
+      setState(() => _isRoomNumberSet = true);
     } catch (e, st) {
       debugPrint('SharedPreferences error: $e\n$st');
       if (!mounted) return;
@@ -61,39 +66,74 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _controller,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                decoration: const InputDecoration(
-                  labelText: 'Room number',
-                  border: OutlineInputBorder(),
-                ),
-                textInputAction: TextInputAction.done,
-                onChanged: (_) => setState(() => _isSaved = false),
-                onSubmitted: (_) => _onSubmit(),
+      body: SafeArea(
+        child: switch (_isRoomNumberSet) {
+          null => const Center(child: CircularProgressIndicator()),
+          false => _RoomNumberForm(
+              controller: _controller,
+              isSaved: _isSaved,
+              onSubmit: _onSubmit,
+              onChanged: () => setState(() => _isSaved = false),
+            ),
+          true => const BookingCalendar(),
+        },
+      ),
+    );
+  }
+}
+
+class _RoomNumberForm extends StatelessWidget {
+  const _RoomNumberForm({
+    required this.controller,
+    required this.isSaved,
+    required this.onSubmit,
+    required this.onChanged,
+  });
+
+  final TextEditingController controller;
+  final bool isSaved;
+  final VoidCallback onSubmit;
+  final VoidCallback onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'What is your room number?',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'Room number',
+                border: OutlineInputBorder(),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _isSaved ? null : _onSubmit,
-                  style: FilledButton.styleFrom(
-                    disabledBackgroundColor: Colors.grey.shade300,
-                    disabledForegroundColor: Colors.grey.shade500,
-                  ),
-                  child: const Text('Submit'),
+              textInputAction: TextInputAction.done,
+              onChanged: (_) => onChanged(),
+              onSubmitted: (_) => onSubmit(),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: isSaved ? null : onSubmit,
+                style: FilledButton.styleFrom(
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  disabledForegroundColor: Colors.grey.shade500,
                 ),
+                child: const Text('Submit'),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
