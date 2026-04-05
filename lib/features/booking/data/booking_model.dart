@@ -21,7 +21,7 @@ class BookingModel {
       };
 
   factory BookingModel.fromJson(Map<String, dynamic> json) => BookingModel(
-        id: json['id'] as String? ?? const Uuid().v7(),
+        id: json['id'] as String,
         startTime: DateTime.parse(json['startTime'] as String),
         endTime: DateTime.parse(json['endTime'] as String),
         title: json['title'] as String,
