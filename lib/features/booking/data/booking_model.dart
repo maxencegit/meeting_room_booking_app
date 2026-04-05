@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 class BookingModel {
   const BookingModel({
     required this.id,
@@ -19,7 +21,7 @@ class BookingModel {
       };
 
   factory BookingModel.fromJson(Map<String, dynamic> json) => BookingModel(
-        id: json['id'] as String,
+        id: json['id'] as String? ?? const Uuid().v7(),
         startTime: DateTime.parse(json['startTime'] as String),
         endTime: DateTime.parse(json['endTime'] as String),
         title: json['title'] as String,
