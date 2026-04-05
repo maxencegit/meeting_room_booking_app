@@ -17,6 +17,7 @@ class BookingDialog extends StatefulWidget {
 class _BookingDialogState extends State<BookingDialog> {
   late TimeOfDay _startTime;
   late TimeOfDay _endTime;
+  final _nameController = TextEditingController();
 
   @override
   void initState() {
@@ -26,6 +27,13 @@ class _BookingDialogState extends State<BookingDialog> {
         TimeOfDay.fromDateTime(
           widget.initialDateTime.add(const Duration(hours: 1)),
         );
+    _nameController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
   }
 
   Future<void> _pickTime({required bool isStart}) async {
@@ -53,7 +61,9 @@ class _BookingDialogState extends State<BookingDialog> {
 
   int _toMinutes(TimeOfDay t) => t.hour * 60 + t.minute;
 
-  bool get _isValid => _toMinutes(_endTime) > _toMinutes(_startTime);
+  bool get _isValid =>
+      _nameController.text.trim().isNotEmpty &&
+      _toMinutes(_endTime) > _toMinutes(_startTime);
 
   String _formatTime(TimeOfDay t) => t.format(context);
 
@@ -64,7 +74,6 @@ class _BookingDialogState extends State<BookingDialog> {
         '${_weekday(date.weekday)} ${date.day}/${date.month}/${date.year}';
 
     return AlertDialog(
-      title: const Text('New booking'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -73,6 +82,18 @@ class _BookingDialogState extends State<BookingDialog> {
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _nameController,
+            autofocus: true,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(
+              labelText: 'Meeting name',
+              hintText: 'e.g. Sprint planning',
+              border: OutlineInputBorder(),
+              isDense: true,
+            ),
           ),
           const SizedBox(height: 16),
           _TimeTile(
@@ -89,7 +110,9 @@ class _BookingDialogState extends State<BookingDialog> {
           if (!_isValid) ...[
             const SizedBox(height: 8),
             Text(
-              'End time must be after start time',
+              _nameController.text.trim().isEmpty
+                  ? 'Name is missing'
+                  : 'End time must be after start time',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(context).colorScheme.error,
                   ),
@@ -105,7 +128,7 @@ class _BookingDialogState extends State<BookingDialog> {
         FilledButton(
           onPressed: _isValid
               ? () => Navigator.of(context).pop(
-                    (_startTime, _endTime),
+                    (_nameController.text.trim(), _startTime, _endTime),
                   )
               : null,
           child: const Text('Book'),

@@ -86,7 +86,7 @@ class _BookingCalendarState extends State<BookingCalendar>
 
     if (!mounted) return;
 
-    final dialogResult = await showDialog<(TimeOfDay, TimeOfDay)>(
+    final dialogResult = await showDialog<(String, TimeOfDay, TimeOfDay)>(
       context: context,
       builder: (_) => BookingDialog(
         // Full DateTime so the dialog has both the date (for the label)
@@ -100,7 +100,7 @@ class _BookingCalendarState extends State<BookingCalendar>
 
     if (dialogResult == null || !mounted) return;
 
-    final (startTime, endTime) = dialogResult;
+    final (name, startTime, endTime) = dialogResult;
     final start = DateTime(
       dateTime.year, dateTime.month, dateTime.day,
       startTime.hour, startTime.minute,
@@ -110,7 +110,7 @@ class _BookingCalendarState extends State<BookingCalendar>
       endTime.hour, endTime.minute,
     );
 
-    final booking = BookingModel(id: Uuid().v7(), startTime: start, endTime: end, title: 'Meeting');
+    final booking = BookingModel(id: Uuid().v7(), startTime: start, endTime: end, title: name);
     final result = await _repository.save(booking);
 
     if (!mounted) return;
@@ -207,6 +207,26 @@ class _BookingCalendarState extends State<BookingCalendar>
       ),
       onDateTap: _onSlotTapped,
       onEventTap: (events, dateTime) => _onEventTap(events, dateTime),
+      eventTileBuilder: (date, events, boundary, start, end) {
+        final event = events.firstOrNull;
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          child: Text(
+            event?.title ?? '',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        );
+      },
     );
   }
 }
