@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 class BookingDialog extends StatefulWidget {
-  const BookingDialog({super.key, required this.initialDateTime});
+  const BookingDialog({
+    super.key,
+    required this.initialDateTime,
+    this.initialEndTime,
+  });
 
   final DateTime initialDateTime;
+  final TimeOfDay? initialEndTime;
 
   @override
   State<BookingDialog> createState() => _BookingDialogState();
@@ -17,9 +22,10 @@ class _BookingDialogState extends State<BookingDialog> {
   void initState() {
     super.initState();
     _startTime = TimeOfDay.fromDateTime(widget.initialDateTime);
-    _endTime = TimeOfDay.fromDateTime(
-      widget.initialDateTime.add(const Duration(hours: 1)),
-    );
+    _endTime = widget.initialEndTime ??
+        TimeOfDay.fromDateTime(
+          widget.initialDateTime.add(const Duration(hours: 1)),
+        );
   }
 
   Future<void> _pickTime({required bool isStart}) async {

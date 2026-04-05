@@ -72,9 +72,20 @@ class _BookingCalendarState extends State<BookingCalendar>
   }
 
   Future<void> _onSlotTapped(DateTime dateTime) async {
+    final suggested = await _repository.getSuggestedTimes(dateTime);
+
+    if (!mounted) return;
+
     final dialogResult = await showDialog<(TimeOfDay, TimeOfDay)>(
       context: context,
-      builder: (_) => BookingDialog(initialDateTime: dateTime),
+      builder: (_) => BookingDialog(
+        // Full DateTime so the dialog has both the date (for the label)
+        // and the suggested start time.
+        initialDateTime: suggested.start,
+        // Only the time is needed for the end — the date is already
+        // carried by initialDateTime above.
+        initialEndTime: TimeOfDay.fromDateTime(suggested.end),
+      ),
     );
 
     if (dialogResult == null || !mounted) return;

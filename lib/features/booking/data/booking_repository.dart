@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'booking_model.dart';
@@ -48,6 +49,31 @@ class BookingRepository {
     final raw = prefs.getStringList(_key) ?? [];
     raw.removeWhere((s) => BookingModel.fromJson(jsonDecode(s) as Map<String, dynamic>).id == id);
     await prefs.setStringList(_key, raw);
+  }
+
+  Future<({DateTime start, DateTime end})> getSuggestedTimes(
+    DateTime tappedAt,
+  ) async {
+    final all = await loadAll();
+    final dayBookings = all
+        .where((b) => DateUtils.isSameDay(b.startTime, tappedAt))
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+
+    // Latest meeting that ends at or before the tapped time
+    final previous = dayBookings
+        .where((b) => !b.endTime.isAfter(tappedAt))
+        .lastOrNull;
+
+    // Earliest meeting that starts after the tapped time
+    final next = dayBookings
+        .where((b) => b.startTime.isAfter(tappedAt))
+        .firstOrNull;
+
+    final start = previous?.endTime ?? tappedAt;
+    final end = next?.startTime ?? start.add(const Duration(hours: 1));
+
+    return (start: start, end: end);
   }
 
   Future<void> deleteAll() async {
