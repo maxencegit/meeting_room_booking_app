@@ -15,7 +15,6 @@ class BookingCalendar extends StatefulWidget {
 
 class _BookingCalendarState extends State<BookingCalendar> {
   final _repository = BookingRepository();
-
   @override
   void initState() {
     super.initState();
@@ -90,6 +89,15 @@ class _BookingCalendarState extends State<BookingCalendar> {
       showLiveTimeLineInAllDays: true,
       timeLineWidth: 56,
       weekTitleHeight: 40,
+      startHour: 8,
+      endHour: 19,
+      weekDays: const [
+        WeekDays.monday,
+        WeekDays.tuesday,
+        WeekDays.wednesday,
+        WeekDays.thursday,
+        WeekDays.friday,
+      ],
       weekDayBuilder: (date) => _WeekDayHeader(date: date),
       headerStyle: HeaderStyle(
         decoration: BoxDecoration(
