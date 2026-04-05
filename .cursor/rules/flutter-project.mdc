@@ -31,7 +31,22 @@ lib/
 - Split large widgets into smaller private widgets or separate files
 
 ## Navigation
-- Use **go_router** for declarative routing
+- Use **go_router** for declarative routing — only when screens have a real back stack (e.g. calendar → booking detail)
+- For simple **state-driven UI swaps** with no back stack (e.g. loading → setup → main), use a `switch` on a named enum inside the widget — do NOT add go_router just for this
+
+```dart
+// ✅ State-driven swap — no router needed
+enum _ScreenState { loading, setup, calendar }
+
+switch (_screenState) {
+  _ScreenState.loading  => const CircularProgressIndicator(),
+  _ScreenState.setup    => const SetupForm(),
+  _ScreenState.calendar => const BookingCalendar(),
+}
+
+// ✅ Use go_router when navigation history matters
+// e.g. tapping a day → booking detail screen (back button expected)
+```
 
 ## Error Handling
 - Never swallow errors silently

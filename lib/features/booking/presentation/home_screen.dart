@@ -6,6 +6,8 @@ import 'booking_calendar.dart';
 
 const _roomNumberKey = 'room_number';
 
+enum _ScreenState { loading, setup, calendar }
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -17,8 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final _controller = TextEditingController();
   bool _isSaved = false;
 
-  // null = still loading, false = not set, true = already set
-  bool? _isRoomNumberSet;
+  _ScreenState _screenState = _ScreenState.loading;
 
   @override
   void initState() {
@@ -31,7 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final saved = prefs.getInt(_roomNumberKey);
     if (!mounted) return;
     setState(() {
-      _isRoomNumberSet = saved != null;
+      _screenState =
+          saved != null ? _ScreenState.calendar : _ScreenState.setup;
       if (saved != null) _controller.text = saved.toString();
     });
   }
@@ -46,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_roomNumberKey, value);
       if (!mounted) return;
-      setState(() => _isRoomNumberSet = true);
+      setState(() => _screenState = _ScreenState.calendar);
     } catch (e, st) {
       debugPrint('SharedPreferences error: $e\n$st');
       if (!mounted) return;
@@ -67,15 +69,17 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: switch (_isRoomNumberSet) {
-          null => const Center(child: CircularProgressIndicator()),
-          false => _RoomNumberForm(
+        child: switch (_screenState) {
+          _ScreenState.loading => const Center(
+              child: CircularProgressIndicator(),
+            ),
+          _ScreenState.setup => _RoomNumberForm(
               controller: _controller,
               isSaved: _isSaved,
               onSubmit: _onSubmit,
               onChanged: () => setState(() => _isSaved = false),
             ),
-          true => const BookingCalendar(),
+          _ScreenState.calendar => const BookingCalendar(),
         },
       ),
     );
