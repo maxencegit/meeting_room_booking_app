@@ -2,6 +2,7 @@ import 'package:calendar_view/calendar_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'features/booking/data/booking_model.dart';
 import 'features/booking/presentation/home_screen.dart';
 
 void main() {
@@ -13,8 +14,8 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CalendarControllerProvider(
-      controller: EventController(),
+    return CalendarControllerProvider<BookingModel>(
+      controller: EventController<BookingModel>(),
       child: MaterialApp(
         title: 'Meeting Room Booking',
         theme: ThemeData(

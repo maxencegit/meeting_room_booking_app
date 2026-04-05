@@ -6,6 +6,7 @@ import '../data/booking_repository.dart';
 
 import 'booking_dialog.dart';
 
+import 'package:uuid/uuid.dart';
 class BookingCalendar extends StatefulWidget {
   const BookingCalendar({super.key});
 
@@ -55,15 +56,16 @@ class _BookingCalendarState extends State<BookingCalendar>
     final bookings = await _repository.loadAll();
     if (!mounted) return;
 
-    final controller = CalendarControllerProvider.of<Object?>(context).controller;
+    final controller = CalendarControllerProvider.of<BookingModel>(context).controller;
     for (final booking in bookings) {
       controller.add(
-        CalendarEventData(
+        CalendarEventData<BookingModel>(
           title: booking.title,
           date: booking.startTime,
           startTime: booking.startTime,
           endTime: booking.endTime,
           color: Theme.of(context).colorScheme.primary,
+          event: booking,
         ),
       );
     }
@@ -87,7 +89,7 @@ class _BookingCalendarState extends State<BookingCalendar>
       endTime.hour, endTime.minute,
     );
 
-    final booking = BookingModel(startTime: start, endTime: end, title: 'Meeting');
+    final booking = BookingModel(id: Uuid().v7(), startTime: start, endTime: end, title: 'Meeting');
     final result = await _repository.save(booking);
 
     if (!mounted) return;
@@ -101,24 +103,27 @@ class _BookingCalendarState extends State<BookingCalendar>
           ),
         );
       case SaveBookingSuccess():
-        CalendarControllerProvider.of<Object?>(context).controller.add(
-          CalendarEventData(
+        CalendarControllerProvider.of<BookingModel>(context).controller.add(
+          CalendarEventData<BookingModel>(
             title: booking.title,
             date: booking.startTime,
             startTime: booking.startTime,
             endTime: booking.endTime,
             color: Theme.of(context).colorScheme.primary,
+            event: booking,
           ),
         );
     }
   }
 
   Future<void> _onEventTap(
-    List<CalendarEventData> events,
+    List<CalendarEventData<BookingModel>> events,
     DateTime dateTime,
   ) async {
     if (events.isEmpty) return;
     final event = events.first;
+    final booking = event.event;
+    if (booking == null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -148,20 +153,15 @@ class _BookingCalendarState extends State<BookingCalendar>
 
     if (confirmed != true || !mounted) return;
 
-    final booking = BookingModel(
-      startTime: event.startTime!,
-      endTime: event.endTime!,
-      title: event.title,
-    );
-    await _repository.delete(booking);
+    await _repository.delete(booking.id);
 
     if (!mounted) return;
-    CalendarControllerProvider.of<Object?>(context).controller.remove(event);
+    CalendarControllerProvider.of<BookingModel>(context).controller.remove(event);
   }
 
   @override
   Widget build(BuildContext context) {
-    return WeekView(
+    return WeekView<BookingModel>(
       key: _calendarKey,
       showLiveTimeLineInAllDays: true,
       timeLineWidth: 56,
