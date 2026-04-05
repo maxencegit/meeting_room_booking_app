@@ -1,5 +1,3 @@
-import 'package:uuid/uuid.dart';
-
 class BookingModel {
   const BookingModel({
     required this.id,
