@@ -19,7 +19,7 @@ class _BookingCalendarState extends State<BookingCalendar>
   final _repository = BookingRepository();
   static const _startHour = 8;
   static const _endHour = 19;
-  static const _heightPerMinute = 0.7;
+  static const _weekTitleHeight = 48.0;
 
   Key _calendarKey = UniqueKey();
 
@@ -37,10 +37,20 @@ class _BookingCalendarState extends State<BookingCalendar>
     }
   }
 
+  double _heightPerMinute(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    final available = mq.size.height
+        - mq.padding.top
+        - mq.padding.bottom
+        - _weekTitleHeight;
+    const totalMinutes = (_endHour - _startHour) * 60;
+    return (available / totalMinutes).clamp(0.6, 1.4);
+  }
+
   double _scrollOffset(BuildContext context) {
     final now = DateTime.now();
     final minutesFromStart = (now.hour - _startHour) * 60 + now.minute;
-    final currentTimePixel = minutesFromStart * _heightPerMinute;
+    final currentTimePixel = minutesFromStart * _heightPerMinute(context);
     final mq = MediaQuery.of(context);
     final viewportHeight = mq.size.height - mq.padding.top - mq.padding.bottom;
     return (currentTimePixel - viewportHeight / 2).clamp(0.0, double.maxFinite);
@@ -176,10 +186,10 @@ class _BookingCalendarState extends State<BookingCalendar>
       key: _calendarKey,
       showLiveTimeLineInAllDays: true,
       timeLineWidth: 56,
-      weekTitleHeight: 48,
+      weekTitleHeight: _weekTitleHeight,
       startHour: _startHour,
       endHour: _endHour,
-      heightPerMinute: _heightPerMinute,
+      heightPerMinute: _heightPerMinute(context),
       minuteSlotSize: MinuteSlotSize.minutes15,
       scrollOffset: _scrollOffset(context),
       weekDays: const [
