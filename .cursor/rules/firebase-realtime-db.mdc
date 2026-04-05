@@ -1,0 +1,57 @@
+---
+description: Firebase Realtime Database patterns and best practices
+alwaysApply: true
+---
+
+# Firebase Realtime Database Patterns
+
+## Data Modeling — Keep it Flat
+Avoid deep nesting. Denormalize data to enable efficient queries.
+
+```
+// ❌ BAD — nested bookings under rooms
+rooms/
+  room1/
+    bookings/
+      booking1: { ... }
+
+// ✅ GOOD — flat, cross-referenced
+rooms/
+  room1: { name, capacity }
+bookings/
+  booking1: { roomId, userId, startTime, endTime }
+userBookings/
+  userId1/
+    booking1: true   ← index for fast user lookup
+```
+
+## Reading Data
+- Use `.onValue` stream for real-time updates (live UI)
+- Use `.get()` (once) for one-shot fetches (e.g., on submit)
+- Always scope queries to the smallest node needed
+
+```dart
+// ✅ Stream for live room availability
+final stream = _db.ref('rooms').onValue;
+
+// ✅ One-shot for booking confirmation
+final snapshot = await _db.ref('bookings/$id').get();
+```
+
+## Writing Data
+- Use `set()` for new records with a known key
+- Use `push()` to let Firebase generate unique keys
+- Use `update()` for partial updates across multiple paths (atomic)
+
+```dart
+// ✅ Atomic multi-path write
+await _db.ref().update({
+  'bookings/$bookingId': bookingData,
+  'userBookings/$userId/$bookingId': true,
+});
+```
+
+## Performance
+- Index queried fields in `firebase.json` security rules (`".indexOn"`)
+- Avoid `limitToFirst` / `orderByChild` on large unindexed nodes
+- Detach listeners (`cancel()` on stream subscription) when widgets dispose

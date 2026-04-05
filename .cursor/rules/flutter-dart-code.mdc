@@ -1,0 +1,50 @@
+---
+description: Dart coding standards for Flutter files
+globs: **/*.dart
+alwaysApply: false
+---
+
+# Dart Code Standards
+
+## General
+- Use `final` and `const` everywhere possible
+- Prefer named parameters for constructors with more than 2 parameters
+- Use `sealed` classes for exhaustive pattern matching on domain states
+
+## Models
+- Use `freezed` for immutable data classes and unions
+- Always implement `copyWith`, `==`, and `hashCode` via `freezed`
+
+```dart
+// ✅ GOOD
+@freezed
+class Room with _$Room {
+  const factory Room({
+    required String id,
+    required String name,
+    required int capacity,
+  }) = _Room;
+
+  factory Room.fromJson(Map<String, dynamic> json) => _$RoomFromJson(json);
+}
+```
+
+## Async
+- Use `Future`/`Stream` — never `async` without `await`
+- Always handle errors: use `try/catch` or Riverpod's `AsyncValue.guard`
+
+```dart
+// ✅ GOOD
+Future<void> bookRoom(String roomId) async {
+  try {
+    await _repository.book(roomId);
+  } catch (e, st) {
+    // log and rethrow or handle
+    throw BookingException('Failed to book room $roomId', e);
+  }
+}
+```
+
+## Formatting
+- Max line length: 80 characters (`dart format` enforced)
+- No unused imports or variables

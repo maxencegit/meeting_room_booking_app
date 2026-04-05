@@ -1,0 +1,38 @@
+---
+description: Flutter project architecture and conventions for the meeting room booking app
+alwaysApply: true
+---
+
+# Flutter Project Conventions
+
+## Architecture
+- Use **feature-first** folder structure: `lib/features/<feature>/presentation/`, `data/`, `domain/`
+- State management: **Riverpod 3.3.x** (use `@riverpod` code generation, `AsyncNotifier` for async state)
+- Do NOT suggest `riverpod_lint` or `custom_lint` — incompatible with current `freezed_annotation ^3.x` + `flutter_riverpod >=3.2.1`
+- Separate UI from business logic — no Firebase/API calls inside widgets
+
+## Folder Structure
+```
+lib/
+  features/
+    booking/
+      data/         # repositories, data sources, models
+      domain/       # entities, use cases, repository interfaces
+      presentation/ # screens, widgets, providers
+  shared/
+    widgets/        # reusable UI components
+    theme/
+    utils/
+```
+
+## Widget Rules
+- Prefer `StatelessWidget` + Riverpod over `StatefulWidget`
+- Always use `const` constructors where possible
+- Split large widgets into smaller private widgets or separate files
+
+## Navigation
+- Use **go_router** for declarative routing
+
+## Error Handling
+- Never swallow errors silently
+- Expose loading/error/data states via `AsyncValue` from Riverpod
