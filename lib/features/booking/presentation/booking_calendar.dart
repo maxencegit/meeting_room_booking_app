@@ -137,6 +137,82 @@ class _BookingCalendarState extends State<BookingCalendar>
     }
   }
 
+  Future<void> _onEventLongTap(
+    List<CalendarEventData<BookingModel>> events,
+    DateTime dateTime,
+  ) async {
+    if (events.isEmpty) return;
+    final event = events.first;
+    final booking = event.event;
+    if (booking == null) return;
+
+    final dialogResult = await showDialog<(String, TimeOfDay, TimeOfDay)>(
+      context: context,
+      builder: (_) => BookingDialog(
+        initialDateTime: booking.startTime,
+        initialEndTime: TimeOfDay.fromDateTime(booking.endTime),
+        initialTitle: booking.title,
+      ),
+    );
+
+    if (dialogResult == null || !mounted) return;
+
+    final (name, startTime, endTime) = dialogResult;
+    final start = DateTime(
+      booking.startTime.year,
+      booking.startTime.month,
+      booking.startTime.day,
+      startTime.hour,
+      startTime.minute,
+    );
+    final end = DateTime(
+      booking.startTime.year,
+      booking.startTime.month,
+      booking.startTime.day,
+      endTime.hour,
+      endTime.minute,
+    );
+
+    await _repository.delete(booking.id);
+
+    final updated = BookingModel(
+      id: booking.id,
+      startTime: start,
+      endTime: end,
+      title: name,
+    );
+    final result = await _repository.save(updated);
+
+    if (!mounted) return;
+
+    switch (result) {
+      case SaveBookingConflict():
+        await _repository.save(booking);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'A meeting already exists during this time slot',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      case SaveBookingSuccess():
+        final controller =
+            CalendarControllerProvider.of<BookingModel>(context).controller;
+        controller.remove(event);
+        controller.add(
+          CalendarEventData<BookingModel>(
+            title: updated.title,
+            date: updated.startTime,
+            startTime: updated.startTime,
+            endTime: updated.endTime,
+            color: Theme.of(context).colorScheme.primary,
+            event: updated,
+          ),
+        );
+    }
+  }
+
   Future<void> _onEventTap(
     List<CalendarEventData<BookingModel>> events,
     DateTime dateTime,
@@ -207,6 +283,8 @@ class _BookingCalendarState extends State<BookingCalendar>
       ),
       onDateTap: _onSlotTapped,
       onEventTap: (events, dateTime) => _onEventTap(events, dateTime),
+      onEventLongTap: (events, dateTime) =>
+          _onEventLongTap(events, dateTime),
       eventTileBuilder: (date, events, boundary, start, end) {
         final event = events.firstOrNull;
         return Container(

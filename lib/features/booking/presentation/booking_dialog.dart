@@ -5,10 +5,12 @@ class BookingDialog extends StatefulWidget {
     super.key,
     required this.initialDateTime,
     this.initialEndTime,
+    this.initialTitle,
   });
 
   final DateTime initialDateTime;
   final TimeOfDay? initialEndTime;
+  final String? initialTitle;
 
   @override
   State<BookingDialog> createState() => _BookingDialogState();
@@ -27,6 +29,9 @@ class _BookingDialogState extends State<BookingDialog> {
         TimeOfDay.fromDateTime(
           widget.initialDateTime.add(const Duration(hours: 1)),
         );
+    if (widget.initialTitle != null) {
+      _nameController.text = widget.initialTitle!;
+    }
     _nameController.addListener(() => setState(() {}));
   }
 
