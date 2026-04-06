@@ -173,21 +173,18 @@ class _BookingCalendarState extends State<BookingCalendar>
       endTime.minute,
     );
 
-    await _repository.delete(booking.id);
-
     final updated = BookingModel(
       id: booking.id,
       startTime: start,
       endTime: end,
       title: name,
     );
-    final result = await _repository.save(updated);
+    final result = await _repository.update(updated);
 
     if (!mounted) return;
 
     switch (result) {
       case SaveBookingConflict():
-        await _repository.save(booking);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text(

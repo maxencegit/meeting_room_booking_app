@@ -44,6 +44,29 @@ class BookingRepository {
     return const SaveBookingSuccess();
   }
 
+  Future<SaveBookingResult> update(BookingModel updated) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? [];
+    final existing = raw
+        .map(
+          (s) => BookingModel.fromJson(jsonDecode(s) as Map<String, dynamic>),
+        )
+        .toList();
+
+    final conflict = existing
+        .where((b) => b.id != updated.id)
+        .where(_overlaps(updated))
+        .firstOrNull;
+    if (conflict != null) return SaveBookingConflict(conflict);
+
+    final newRaw = existing
+        .map((b) => b.id == updated.id ? updated : b)
+        .map((b) => jsonEncode(b.toJson()))
+        .toList();
+    await prefs.setStringList(_key, newRaw);
+    return const SaveBookingSuccess();
+  }
+
   Future<void> delete(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
@@ -70,7 +93,7 @@ class BookingRepository {
         .where((b) => b.startTime.isAfter(tappedAt))
         .firstOrNull;
 
-    final start = previous?.endTime ?? tappedAt;
+    final start = previous?.endTime ?? DateTime(tappedAt.year, tappedAt.month, tappedAt.day, tappedAt.hour, 0, 0);
     final end = next?.startTime ?? start.add(const Duration(hours: 1));
 
     return (start: start, end: end);
